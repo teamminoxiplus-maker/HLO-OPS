@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Upload, Download, Plus } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getDaysPendingThresholds } from "@/lib/settings";
 import { buttonVariants } from "@/components/ui/button";
