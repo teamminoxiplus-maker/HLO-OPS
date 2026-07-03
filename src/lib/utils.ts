@@ -60,6 +60,18 @@ export function todayManila(): string {
   }).format(new Date());
 }
 
+// Add (or subtract) days to a YYYY-MM-DD string, returning YYYY-MM-DD.
+export function addDays(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00+08:00`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
 export function titleCase(s: string): string {
   return s
     .replace(/_/g, " ")
