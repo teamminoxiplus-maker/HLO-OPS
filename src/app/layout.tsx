@@ -4,7 +4,7 @@ import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: {
-    default: `${BRAND.appName} — ${BRAND.appSubtitle}`,
+    default: BRAND.fullName,
     template: `%s · ${BRAND.appName}`,
   },
   description: `${BRAND.name} internal operations portal — orders, production, and content in one place.`,

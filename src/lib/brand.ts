@@ -6,7 +6,9 @@ export const BRAND = {
   name: "Happy Life Organics",
   short: "Happy Life",
   descriptor: "Operations",
-  // App/tool label used in titles and the sidebar lockup.
+  // Full product name (browser title / documents).
+  fullName: "Happy Life Organics-Operations Hub",
+  // App/tool label used in the sidebar lockup (mark + stacked wordmark).
   appName: "Happy Life Organics",
   appSubtitle: "Operations Hub",
   tagline: "Grow naturally. Work simply.",
