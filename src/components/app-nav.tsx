@@ -10,12 +10,12 @@ import {
   Megaphone,
   Menu,
   X,
-  Leaf,
   LogOut,
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Logo, LogoMark } from "@/components/logo";
 import { signOut } from "@/app/login/actions";
 import type { UserProfile } from "@/lib/types";
 
@@ -61,11 +61,8 @@ export function AppNav({ profile }: { profile: UserProfile }) {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden w-60 shrink-0 flex-col border-r bg-card md:flex">
-        <div className="flex h-14 items-center gap-2 border-b px-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Leaf className="h-4 w-4" />
-          </div>
-          <span className="font-semibold">HLO Ops Hub</span>
+        <div className="flex h-16 items-center border-b px-4">
+          <Logo />
         </div>
         <nav className="flex-1 space-y-1 p-3">
           <NavLinks />
@@ -88,12 +85,7 @@ export function AppNav({ profile }: { profile: UserProfile }) {
 
       {/* Mobile top bar */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-card px-4 md:hidden">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Leaf className="h-4 w-4" />
-          </div>
-          <span className="font-semibold">HLO Ops Hub</span>
-        </div>
+        <Logo compact markSize="h-7 w-7" />
         <Button
           variant="ghost"
           size="icon"
@@ -113,7 +105,10 @@ export function AppNav({ profile }: { profile: UserProfile }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex h-14 items-center justify-between border-b px-4">
-              <span className="font-semibold">Menu</span>
+              <span className="flex items-center gap-2">
+                <LogoMark className="h-7 w-7" />
+                <span className="font-semibold">Menu</span>
+              </span>
               <Button
                 variant="ghost"
                 size="icon"

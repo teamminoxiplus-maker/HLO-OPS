@@ -2,60 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Happy Life Organics — brand-aligned design tokens.
+  Organic, natural, warm. Deep leaf green as primary, warm honey as accent,
+  soft "paper" backgrounds. Fully theme-aware (light + dark).
+*/
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  --background: 60 30% 98%;        /* warm paper */
+  --foreground: 155 30% 12%;       /* deep green-charcoal */
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --primary: 158 64% 30%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
-  --destructive: 0 72% 51%;
+  --card-foreground: 155 30% 12%;
+  --primary: 158 60% 28%;          /* deep leaf green */
+  --primary-foreground: 60 30% 98%;
+  --secondary: 150 24% 94%;        /* soft sage */
+  --secondary-foreground: 158 40% 20%;
+  --muted: 150 22% 95%;
+  --muted-foreground: 155 12% 40%;
+  --accent: 40 80% 94%;            /* warm honey wash */
+  --accent-foreground: 30 45% 24%;
+  --destructive: 0 72% 48%;
   --destructive-foreground: 0 0% 100%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 158 64% 30%;
-  --radius: 0.5rem;
+  --border: 150 18% 88%;
+  --input: 150 18% 86%;
+  --ring: 158 55% 34%;
+  --honey: 38 92% 50%;             /* warm accent for highlights */
+  --radius: 0.7rem;
 }
 
 .dark {
-  --background: 222 47% 8%;
-  --foreground: 210 40% 96%;
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 96%;
-  --primary: 158 64% 42%;
-  --primary-foreground: 222 47% 8%;
-  --secondary: 217 33% 17%;
-  --secondary-foreground: 210 40% 96%;
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 217 33% 17%;
-  --accent-foreground: 210 40% 96%;
-  --destructive: 0 63% 45%;
-  --destructive-foreground: 210 40% 96%;
-  --border: 217 33% 20%;
-  --input: 217 33% 20%;
-  --ring: 158 64% 42%;
+  --background: 156 30% 7%;        /* deep forest charcoal */
+  --foreground: 60 24% 92%;
+  --card: 156 26% 10%;
+  --card-foreground: 60 24% 92%;
+  --primary: 150 58% 44%;          /* fresh leaf */
+  --primary-foreground: 156 40% 8%;
+  --secondary: 156 20% 15%;
+  --secondary-foreground: 60 20% 90%;
+  --muted: 156 18% 15%;
+  --muted-foreground: 150 12% 62%;
+  --accent: 40 30% 18%;
+  --accent-foreground: 40 60% 85%;
+  --destructive: 0 62% 46%;
+  --destructive-foreground: 60 24% 92%;
+  --border: 156 16% 20%;
+  --input: 156 16% 22%;
+  --ring: 150 55% 46%;
+  --honey: 40 90% 56%;
+  --radius: 0.7rem;
 }
 
 * {
   border-color: hsl(var(--border));
 }
 
+html {
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle organic texture on the app background */
+.hlo-surface {
+  background-image:
+    radial-gradient(ellipse 60% 40% at 100% 0%, hsl(var(--primary) / 0.05), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 0% 100%, hsl(var(--honey) / 0.05), transparent 70%);
 }
 
 /* Rendered SOP markdown */
-.prose-sop h1 { @apply text-xl font-bold mt-4 mb-2; }
-.prose-sop h2 { @apply text-lg font-semibold mt-4 mb-2; }
+.prose-sop h1 { @apply text-xl font-bold mt-4 mb-2 tracking-tight; }
+.prose-sop h2 { @apply text-lg font-semibold mt-4 mb-2 tracking-tight; }
 .prose-sop h3 { @apply text-base font-semibold mt-3 mb-1; }
 .prose-sop p { @apply my-2 leading-relaxed; }
 .prose-sop ul { @apply my-2 space-y-1; }

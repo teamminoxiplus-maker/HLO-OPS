@@ -1,14 +1,23 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "HLO Ops Hub",
-  description: "Happy Life Organics — Internal Operations Portal",
+  title: {
+    default: `${BRAND.appName} — ${BRAND.appSubtitle}`,
+    template: `%s · ${BRAND.appName}`,
+  },
+  description: `${BRAND.name} internal operations portal — orders, production, and content in one place.`,
+  applicationName: BRAND.appName,
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#1a7a52" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a1f18" },
+  ],
 };
 
 export default function RootLayout({

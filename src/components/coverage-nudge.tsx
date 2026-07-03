@@ -1,3 +1,4 @@
+import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BRAND_LINES, BRAND_LINE_COLORS, labelize } from "@/lib/constants";
@@ -56,8 +57,9 @@ export async function CoverageNudge() {
           </p>
         )}
         {BRAND_LINES.some((b) => counts[b] === 0) && (
-          <p className="pt-1 text-xs text-amber-600">
-            ⚠ Some brand lines have no content in the last 30 days.
+          <p className="flex items-center gap-1.5 pt-1 text-xs text-amber-600">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            Some brand lines have no content in the last 30 days.
           </p>
         )}
       </CardContent>

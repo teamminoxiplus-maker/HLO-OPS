@@ -1,4 +1,4 @@
-// Seed HLO Ops Hub auth users + profiles.
+// Seed Happy Life Organics — Operations Hub auth users + profiles.
 //
 // Usage:
 //   NEXT_PUBLIC_SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed-users.mjs

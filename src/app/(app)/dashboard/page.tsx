@@ -86,8 +86,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">
-          Kumusta{profile?.name ? `, ${profile.name.split(" ")[0]}` : ""} 👋
+        <h1 className="text-2xl font-bold tracking-tight">
+          Kumusta{profile?.name ? `, ${profile.name.split(" ")[0]}` : ""}
         </h1>
         <p className="text-sm text-muted-foreground">
           Here&apos;s where operations stand today.

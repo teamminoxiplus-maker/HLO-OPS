@@ -1,4 +1,4 @@
-# HLO Ops Hub
+# Happy Life Organics — Operations Hub
 
 Internal operations portal for **Happy Life Organics Philippines** — the single
 source of truth for order tracking, production, and content/marketing across all

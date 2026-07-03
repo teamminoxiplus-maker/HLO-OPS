@@ -44,6 +44,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        honey: "hsl(var(--honey))",
       },
       borderRadius: {
         lg: "var(--radius)",

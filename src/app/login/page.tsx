@@ -7,7 +7,8 @@ import { signIn } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Leaf } from "lucide-react";
+import { LogoMark } from "@/components/logo";
+import { BRAND } from "@/lib/brand";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -56,24 +57,23 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
+    <div className="hlo-surface flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Leaf className="h-6 w-6" />
-          </div>
-          <h1 className="text-xl font-bold">HLO Ops Hub</h1>
-          <p className="text-sm text-muted-foreground">
-            Happy Life Organics — Internal Operations
+        <div className="mb-7 flex flex-col items-center text-center">
+          <LogoMark className="mb-4 h-14 w-14 shadow-sm" />
+          <h1 className="text-xl font-bold tracking-tight">{BRAND.appName}</h1>
+          <p className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            {BRAND.appSubtitle}
           </p>
+          <p className="mt-2 text-sm text-muted-foreground">{BRAND.tagline}</p>
         </div>
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
           <Suspense>
             <LoginForm />
           </Suspense>
         </div>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Access is for HLO team members only.
+          Access is for {BRAND.name} team members only.
         </p>
       </div>
     </div>
