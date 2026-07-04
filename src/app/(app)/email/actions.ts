@@ -9,8 +9,27 @@ import {
   renderEmailHtml,
   sendEmails,
   type OutgoingEmail,
+  type EmailAttachment,
 } from "@/lib/email";
 import type { SubscriberStatus, EmailSubscriber } from "@/lib/types";
+
+// Attachments are the same for every recipient. Cap the total decoded size to
+// keep sends deliverable and within the Server Action body limit.
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB
+
+function validateAttachments(
+  attachments: EmailAttachment[] | undefined,
+): string | null {
+  if (!attachments?.length) return null;
+  // base64 length * 3/4 ≈ decoded bytes.
+  const totalBytes = attachments.reduce(
+    (sum, a) => sum + Math.floor((a.content?.length ?? 0) * 0.75),
+    0,
+  );
+  if (totalBytes > MAX_ATTACHMENT_BYTES)
+    return "Attachments are too large (max 10 MB total). Consider linking to the file instead.";
+  return null;
+}
 
 async function currentUser() {
   const supabase = createClient();
@@ -116,11 +135,17 @@ export async function deleteSubscriber(id: string) {
 }
 
 // ---------------- Sending ----------------
-export async function sendTest(subject: string, body: string) {
+export async function sendTest(
+  subject: string,
+  body: string,
+  attachments?: EmailAttachment[],
+) {
   if (!emailConfigured())
     return { error: "Email isn't set up yet. Add RESEND_API_KEY in Vercel first." };
   if (!subject.trim() || !body.trim())
     return { error: "Add a subject and message before sending a test." };
+  const sizeErr = validateAttachments(attachments);
+  if (sizeErr) return { error: sizeErr };
 
   const user = await currentUser();
   if (!user?.email) return { error: "Could not find your email address." };
@@ -131,6 +156,7 @@ export async function sendTest(subject: string, body: string) {
     subject: `[TEST] ${subject.trim()}`,
     html: renderEmailHtml(body, url),
     text: `${body}\n\n---\nUnsubscribe: ${url}`,
+    attachments,
   };
   const res = await sendEmails([msg]);
   if (res.failed > 0)
@@ -138,11 +164,17 @@ export async function sendTest(subject: string, body: string) {
   return { ok: true, to: user.email };
 }
 
-export async function sendCampaign(subject: string, body: string) {
+export async function sendCampaign(
+  subject: string,
+  body: string,
+  attachments?: EmailAttachment[],
+) {
   if (!emailConfigured())
     return { error: "Email isn't set up yet. Add RESEND_API_KEY in Vercel first." };
   if (!subject.trim() || !body.trim())
     return { error: "Add a subject and message before sending." };
+  const sizeErr = validateAttachments(attachments);
+  if (sizeErr) return { error: sizeErr };
 
   const supabase = createClient();
   const user = await currentUser();
@@ -164,6 +196,7 @@ export async function sendCampaign(subject: string, body: string) {
       subject: subject.trim(),
       html: renderEmailHtml(body, url),
       text: `${body}\n\n---\nUnsubscribe: ${url}`,
+      attachments,
     };
   });
 

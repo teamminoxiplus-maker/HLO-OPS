@@ -89,11 +89,17 @@ export function renderEmailHtml(body: string, unsubscribeUrl: string): string {
 </html>`;
 }
 
+export interface EmailAttachment {
+  filename: string;
+  content: string; // base64-encoded file contents (no data: prefix)
+}
+
 export interface OutgoingEmail {
   to: string;
   subject: string;
   html: string;
   text: string;
+  attachments?: EmailAttachment[];
 }
 
 export interface SendResult {
@@ -126,6 +132,9 @@ export async function sendEmails(messages: OutgoingEmail[]): Promise<SendResult>
             subject: m.subject,
             html: m.html,
             text: m.text,
+            ...(m.attachments?.length
+              ? { attachments: m.attachments }
+              : {}),
           })),
         ),
       });
