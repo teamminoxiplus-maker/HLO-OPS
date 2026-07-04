@@ -194,3 +194,30 @@ export interface DaysPendingThresholds {
   green: number;
   yellow: number;
 }
+
+export type SubscriberStatus = "subscribed" | "unsubscribed";
+
+export interface EmailSubscriber {
+  id: string;
+  email: string;
+  name: string | null;
+  status: SubscriberStatus;
+  source: string | null;
+  unsubscribe_token: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailCampaign {
+  id: string;
+  subject: string;
+  body: string;
+  from_label: string | null;
+  recipient_count: number;
+  sent_count: number;
+  failed_count: number;
+  status: "sent" | "partial" | "failed";
+  sent_at: string | null;
+  created_by: string | null;
+  created_at: string;
+}

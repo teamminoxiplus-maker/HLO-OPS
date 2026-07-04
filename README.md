@@ -14,6 +14,7 @@ Built to the spec in [`Spec.md`](./Spec.md).
 | **Orders** | Server-paginated master table, DB-computed **Days Pending** badge (green/yellow/red, thresholds configurable), filters + sortable columns, inline status/assignee edits, quick-add modal, **bulk actions**, **CSV import with per-channel column mapping + dedupe**, CSV export, collection warning on unpaid + ready-to-ship. |
 | **Production** | Kanban board (Pending / In Progress / Done) with drag-and-drop, assignee-required rule, blocked indicators, overdue deadlines, My Tasks filter. SOP library (searchable) + editor with live markdown preview and auto-incrementing version. |
 | **Content** | Calendar (month grid, color-coded by platform), list view with inline status editing, performance tab (manual metrics + top-10 chart), campaigns with aggregate metrics, coverage nudge. |
+| **Email** | Subscriber list (add / import / export / unsubscribe), compose & send email blasts via Resend, per-recipient unsubscribe links + public unsubscribe page, send-test-to-self, recent-sends history. |
 | **Search** | Global search across orders, tasks, SOPs, and content. |
 
 ## Tech stack
@@ -94,6 +95,26 @@ Orders → **Import CSV**:
 
 > Marketplace export formats vary and change over time — grab a fresh export
 > from each Seller Center and re-check the mapping if columns shift.
+
+## Email marketing (optional module)
+
+The Email module collects contacts and sends blasts through
+[Resend](https://resend.com). To enable **sending**:
+
+1. Run `supabase/migrations/0004_email.sql` (already included in `setup.sql`).
+2. Create a Resend account → copy an API key → add `RESEND_API_KEY` to your
+   environment (Vercel).
+3. To send from your own address, verify your domain in Resend and set
+   `EMAIL_FROM` (e.g. `Happy Life Organics <news@happylifeorganics.ph>`).
+   Without it, the app uses Resend's shared test sender, which only delivers to
+   your own Resend account email.
+
+The contact list and unsubscribe flow work without any of this — only the
+actual send requires the key. Every email includes a per-recipient unsubscribe
+link that points at the public `/unsubscribe` page.
+
+> Note: marketplace exports (Shopee/Lazada/TikTok) usually don't include buyer
+> emails, so your list will mostly come from direct/Viber customers and sign-ups.
 
 ## Project layout
 

@@ -8,6 +8,7 @@ import {
   Package,
   ClipboardList,
   Megaphone,
+  Mail,
   Menu,
   X,
   LogOut,
@@ -24,6 +25,7 @@ const NAV = [
   { href: "/orders", label: "Orders", icon: Package },
   { href: "/production", label: "Production", icon: ClipboardList },
   { href: "/content", label: "Content", icon: Megaphone },
+  { href: "/email", label: "Email", icon: Mail },
   { href: "/search", label: "Search", icon: Search },
 ];
 

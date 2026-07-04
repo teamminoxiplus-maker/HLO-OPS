@@ -34,8 +34,10 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthRoute = path.startsWith("/login");
+  // Public routes reachable without a session (e.g. email unsubscribe links).
+  const isPublicRoute = path.startsWith("/unsubscribe");
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", path);
