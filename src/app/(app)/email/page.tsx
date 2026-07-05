@@ -41,23 +41,37 @@ export default async function EmailPage({
     .order("created_at", { ascending: false })
     .range(from, from + PAGE_SIZE - 1);
 
-  const [{ data: rows, count }, subscribedRes, unsubscribedRes] =
-    await Promise.all([
-      query,
-      supabase
-        .from("email_subscribers")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "subscribed"),
-      supabase
-        .from("email_subscribers")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "unsubscribed"),
-    ]);
+  const [
+    { data: rows, count },
+    subscribedRes,
+    unsubscribedRes,
+    allSubscribedRes,
+  ] = await Promise.all([
+    query,
+    supabase
+      .from("email_subscribers")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "subscribed"),
+    supabase
+      .from("email_subscribers")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "unsubscribed"),
+    // All subscribed emails for the one-click "Copy for BCC" button.
+    supabase
+      .from("email_subscribers")
+      .select("email")
+      .eq("status", "subscribed")
+      .order("created_at", { ascending: false })
+      .limit(5000),
+  ]);
 
   const total = count ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const subscribed = subscribedRes.count ?? 0;
   const unsubscribed = unsubscribedRes.count ?? 0;
+  const subscribedEmails = (
+    (allSubscribedRes.data as { email: string }[]) ?? []
+  ).map((r) => r.email);
 
   return (
     <div className="space-y-4">
@@ -139,6 +153,7 @@ export default async function EmailPage({
         pageCount={pageCount}
         total={total}
         statusFilter={statusFilter}
+        subscribedEmails={subscribedEmails}
       />
     </div>
   );

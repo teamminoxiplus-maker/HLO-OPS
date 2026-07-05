@@ -2,7 +2,15 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Upload, Trash2, UserMinus, UserCheck } from "lucide-react";
+import {
+  Plus,
+  Upload,
+  Trash2,
+  UserMinus,
+  UserCheck,
+  ClipboardCopy,
+  Check,
+} from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,17 +40,40 @@ export function SubscribersClient({
   pageCount,
   total,
   statusFilter,
+  subscribedEmails,
 }: {
   subscribers: EmailSubscriber[];
   page: number;
   pageCount: number;
   total: number;
   statusFilter: SubscriberStatus | null;
+  subscribedEmails: string[];
 }) {
   const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [pending, start] = useTransition();
+
+  async function copyForBcc() {
+    if (subscribedEmails.length === 0) return;
+    const text = subscribedEmails.join(", ");
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Fallback for browsers that block the async clipboard API.
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
 
   // Refresh data when the tab regains focus (spec §7 concurrent edits).
   useEffect(() => {
@@ -83,6 +114,22 @@ export function SubscribersClient({
         </Button>
         <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
           <Upload className="h-4 w-4" /> Import emails
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={copyForBcc}
+          disabled={subscribedEmails.length === 0}
+          title="Copy all subscribed emails, comma-separated, to paste into Gmail Bcc"
+        >
+          {copied ? (
+            <Check className="h-4 w-4 text-emerald-600" />
+          ) : (
+            <ClipboardCopy className="h-4 w-4" />
+          )}
+          {copied
+            ? `Copied ${subscribedEmails.length}`
+            : "Copy emails for BCC"}
         </Button>
       </div>
 
