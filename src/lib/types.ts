@@ -51,13 +51,7 @@ export type SopCategory =
 export type TaskPriority = "low" | "medium" | "high" | "urgent";
 export type TaskStatus = "pending" | "in_progress" | "done";
 
-export type OrderChannel =
-  | "shopee"
-  | "lazada"
-  | "tiktok_shop"
-  | "direct"
-  | "viber"
-  | "other";
+export type OrderChannel = "website" | "other";
 
 export type PaymentStatus = "paid" | "partial" | "unpaid";
 

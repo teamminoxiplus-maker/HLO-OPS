@@ -43,7 +43,7 @@ export function QuickAddOrder({
 
   const [ref, setRef] = useState("");
   const [customer, setCustomer] = useState("");
-  const [channel, setChannel] = useState<OrderChannel>("direct");
+  const [channel, setChannel] = useState<OrderChannel>("website");
   const [orderDate, setOrderDate] = useState(todayManila());
   const [targetDate, setTargetDate] = useState("");
   const [payment, setPayment] = useState<PaymentStatus>("unpaid");
@@ -62,7 +62,7 @@ export function QuickAddOrder({
   function reset() {
     setRef("");
     setCustomer("");
-    setChannel("direct");
+    setChannel("website");
     setOrderDate(todayManila());
     setTargetDate("");
     setPayment("unpaid");

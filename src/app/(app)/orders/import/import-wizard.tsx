@@ -25,7 +25,7 @@ export function ImportWizard({
 }: {
   savedMappings: Record<string, Record<string, string>>;
 }) {
-  const [channel, setChannel] = useState<OrderChannel>("shopee");
+  const [channel, setChannel] = useState<OrderChannel>("website");
   const [parsed, setParsed] = useState<ParsedFile | null>(null);
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [summary, setSummary] = useState<ImportSummary | null>(null);

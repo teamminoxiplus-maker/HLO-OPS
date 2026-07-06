@@ -85,16 +85,16 @@ npm run dev          # http://localhost:3000
 
 Orders → **Import CSV**:
 
-1. Pick the channel (Shopee / Lazada / TikTok Shop / …).
-2. Upload the Seller Center export. Headers are auto-detected and fuzzy-matched
-   to our fields; adjust the **column mapping** and **Save mapping** — it's
-   remembered per channel for next time.
+1. Pick the channel (**Website** / Other).
+2. Upload your website order export (e.g. from your store platform). Headers are
+   auto-detected and fuzzy-matched to our fields; adjust the **column mapping**
+   and **Save mapping** — it's remembered per channel for next time.
 3. Preview and import. Rows are **deduped on `(channel, order_ref)`**:
    re-importing the same file updates existing orders instead of duplicating,
    and you get a summary of new / updated / skipped.
 
-> Marketplace export formats vary and change over time — grab a fresh export
-> from each Seller Center and re-check the mapping if columns shift.
+> Orders are website-only (minoxiplus.com). If your store's export format
+> changes, re-check the column mapping.
 
 ## Email marketing (optional module)
 

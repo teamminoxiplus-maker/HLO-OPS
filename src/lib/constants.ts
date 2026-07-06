@@ -33,14 +33,9 @@ export const DEPARTMENTS: Department[] = [
   "management",
 ];
 
-export const ORDER_CHANNELS: OrderChannel[] = [
-  "shopee",
-  "lazada",
-  "tiktok_shop",
-  "direct",
-  "viber",
-  "other",
-];
+// Orders are website-only (minoxiplus.com); "other" is a catch-all for the
+// occasional phone / Viber / walk-in order.
+export const ORDER_CHANNELS: OrderChannel[] = ["website", "other"];
 
 export const ORDER_STATUSES: OrderStatus[] = [
   "pending",

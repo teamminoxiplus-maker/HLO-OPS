@@ -110,11 +110,11 @@ on conflict do nothing;
 insert into public.orders
   (order_ref, customer_name, channel, order_date, target_completion_date, payment_status, amount_total, amount_paid, status, notes)
 values
-  ('SHP-100201', 'Maria Santos',   'shopee',     current_date - 9, current_date - 2, 'paid',    1499.00, 1499.00, 'pending',        'Rush daw, birthday gift.'),
-  ('LAZ-556012', 'Juan Dela Cruz', 'lazada',     current_date - 6, current_date + 1, 'partial', 2999.00, 1000.00, 'in_production',  'Balance on delivery.'),
-  ('TTS-778820', 'Ana Reyes',      'tiktok_shop',current_date - 5, current_date,     'unpaid',  899.00,  0.00,    'ready_to_ship',  'COD — follow up collection.'),
-  ('DIR-000045', 'Coach Ramon',    'direct',     current_date - 3, current_date + 2, 'paid',    4999.00, 4999.00, 'in_production',  'Pro bundle x1, Viber order.'),
-  ('SHP-100333', 'Liza M.',        'shopee',     current_date - 12,current_date - 5, 'paid',    599.00,  599.00,  'delivered',      'Delivered, feedback 5 stars.')
+  ('WEB-100201', 'Maria Santos',   'website',    current_date - 9, current_date - 2, 'paid',    1499.00, 1499.00, 'pending',        'Rush daw, birthday gift.'),
+  ('WEB-556012', 'Juan Dela Cruz', 'website',    current_date - 6, current_date + 1, 'partial', 2999.00, 1000.00, 'in_production',  'Balance on delivery.'),
+  ('WEB-778820', 'Ana Reyes',      'website',    current_date - 5, current_date,     'unpaid',  899.00,  0.00,    'ready_to_ship',  'COD — follow up collection.'),
+  ('ORD-000045', 'Coach Ramon',    'other',      current_date - 3, current_date + 2, 'paid',    4999.00, 4999.00, 'in_production',  'Pro bundle x1, Viber order.'),
+  ('WEB-100333', 'Liza M.',        'website',    current_date - 12,current_date - 5, 'paid',    599.00,  599.00,  'delivered',      'Delivered, feedback 5 stars.')
 on conflict (channel, order_ref) do nothing;
 
 -- Order lines for the sample orders (best-effort product matches)
@@ -122,11 +122,11 @@ insert into public.order_lines (order_id, product_id, product_name, quantity, un
 select o.id, p.id, p.name, 1, o.amount_total
 from public.orders o
 join public.products p on p.sku = case o.order_ref
-    when 'SHP-100201' then 'MNX-BND-ST'
-    when 'LAZ-556012' then 'MNX-BND-AD'
-    when 'TTS-778820' then 'MNX-KETO'
-    when 'DIR-000045' then 'MNX-BND-PR'
-    when 'SHP-100333' then 'MNX-HFS'
+    when 'WEB-100201' then 'MNX-BND-ST'
+    when 'WEB-556012' then 'MNX-BND-AD'
+    when 'WEB-778820' then 'MNX-KETO'
+    when 'ORD-000045' then 'MNX-BND-PR'
+    when 'WEB-100333' then 'MNX-HFS'
   end
 where not exists (select 1 from public.order_lines ol where ol.order_id = o.id);
 
@@ -137,7 +137,7 @@ insert into public.production_tasks (title, description, priority, status, block
 values
   ('Formulate 10L Minoxidil batch', 'For Shopee 7.7 stock replenishment.', 'high', 'pending', null, current_date + 3),
   ('QA check Ketoconazole batch #42', 'pH + clarity verification.', 'medium', 'pending', 'waiting for sample approval', current_date + 1),
-  ('Pack DIR-000045 Pro bundle', 'Coach Ramon Viber order.', 'urgent', 'pending', null, current_date + 2)
+  ('Pack ORD-000045 Pro bundle', 'Coach Ramon direct order.', 'urgent', 'pending', null, current_date + 2)
 on conflict do nothing;
 
 -- ---------------------------------------------------------------------------

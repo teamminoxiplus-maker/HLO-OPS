@@ -52,7 +52,8 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create type order_channel as enum ('shopee', 'lazada', 'tiktok_shop', 'direct', 'viber', 'other');
+  -- Orders are website-only (minoxiplus.com); 'other' covers phone/Viber/walk-in.
+  create type order_channel as enum ('website', 'other');
 exception when duplicate_object then null; end $$;
 
 do $$ begin
@@ -188,7 +189,7 @@ create table if not exists public.orders (
   id                      uuid primary key default gen_random_uuid(),
   order_ref               text not null,
   customer_name           text not null default '',
-  channel                 order_channel not null,
+  channel                 order_channel not null default 'website',
   order_date              date not null default current_date,
   target_completion_date  date,
   payment_status          payment_status not null default 'unpaid',

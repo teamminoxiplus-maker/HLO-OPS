@@ -14,13 +14,13 @@
 begin;
 
 -- Demo orders (order_lines are removed automatically via ON DELETE CASCADE).
+-- Matched by order_ref so it works regardless of channel.
 delete from public.orders
-where (channel, order_ref) in (
-  ('shopee',      'SHP-100201'),
-  ('lazada',      'LAZ-556012'),
-  ('tiktok_shop', 'TTS-778820'),
-  ('direct',      'DIR-000045'),
-  ('shopee',      'SHP-100333')
+where order_ref in (
+  'WEB-100201', 'WEB-556012', 'WEB-778820', 'ORD-000045', 'WEB-100333',
+  -- also match the original marketplace-style refs, in case demo data predates
+  -- the website-only change:
+  'SHP-100201', 'LAZ-556012', 'TTS-778820', 'DIR-000045', 'SHP-100333'
 );
 
 -- Demo production tasks.
@@ -28,6 +28,7 @@ delete from public.production_tasks
 where title in (
   'Formulate 10L Minoxidil batch',
   'QA check Ketoconazole batch #42',
+  'Pack ORD-000045 Pro bundle',
   'Pack DIR-000045 Pro bundle'
 );
 
