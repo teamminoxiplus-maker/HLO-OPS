@@ -49,6 +49,7 @@ export function QuickAddOrder({
   const [payment, setPayment] = useState<PaymentStatus>("unpaid");
   const [amountPaid, setAmountPaid] = useState("0");
   const [assignee, setAssignee] = useState("");
+  const [tracking, setTracking] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<LineRow[]>([
     { product_id: "", quantity: 1, unit_price: 0 },
@@ -68,6 +69,7 @@ export function QuickAddOrder({
     setPayment("unpaid");
     setAmountPaid("0");
     setAssignee("");
+    setTracking("");
     setNotes("");
     setLines([{ product_id: "", quantity: 1, unit_price: 0 }]);
     setError(null);
@@ -91,6 +93,7 @@ export function QuickAddOrder({
         amount_paid:
           payment === "paid" ? computedTotal : parseFloat(amountPaid) || 0,
         assigned_to: assignee || null,
+        tracking_number: tracking.trim() || null,
         notes: notes || null,
         lines: lines
           .filter((l) => l.product_id)
@@ -319,6 +322,16 @@ export function QuickAddOrder({
                 />
               </div>
             )}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="qa-track">Tracking # (optional)</Label>
+            <Input
+              id="qa-track"
+              value={tracking}
+              onChange={(e) => setTracking(e.target.value)}
+              placeholder="Courier tracking number"
+            />
           </div>
 
           <div className="space-y-1">

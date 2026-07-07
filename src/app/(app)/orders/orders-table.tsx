@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   OrderStatusBadge,
   PaymentBadge,
@@ -210,12 +211,13 @@ export function OrdersTable({
               <TableHead>Payment</TableHead>
               <Th col="amount_total" label="Total" />
               <TableHead>Assignee</TableHead>
+              <TableHead>Tracking #</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {orders.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={11} className="py-10 text-center text-muted-foreground">
                   No orders match these filters.
                 </TableCell>
               </TableRow>
@@ -276,6 +278,9 @@ export function OrdersTable({
                     value={o.assigned_to}
                     users={users}
                   />
+                </TableCell>
+                <TableCell>
+                  <InlineTracking id={o.id} value={o.tracking_number} />
                 </TableCell>
               </TableRow>
             ))}
@@ -366,5 +371,39 @@ function InlineAssignee({
         </option>
       ))}
     </Select>
+  );
+}
+
+// Editable courier tracking number — saves on blur / Enter.
+function InlineTracking({ id, value }: { id: string; value: string | null }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [val, setVal] = useState(value ?? "");
+
+  useEffect(() => {
+    setVal(value ?? "");
+  }, [value]);
+
+  function save() {
+    const next = val.trim();
+    if (next === (value ?? "")) return; // unchanged
+    start(async () => {
+      await updateOrderField(id, { tracking_number: next || null });
+      router.refresh();
+    });
+  }
+
+  return (
+    <Input
+      className="h-8 w-[140px]"
+      value={val}
+      disabled={pending}
+      placeholder="Add tracking #"
+      onChange={(e) => setVal(e.target.value)}
+      onBlur={save}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+      }}
+    />
   );
 }

@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
     amount_paid: o.amount_paid,
     balance: Number(o.amount_total) - Number(o.amount_paid),
     assignee: o.assignee_name ?? "",
+    tracking_number: o.tracking_number ?? "",
     notes: o.notes ?? "",
   }));
 

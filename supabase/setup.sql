@@ -212,6 +212,7 @@ create table if not exists public.orders (
   amount_paid             numeric(12,2) not null default 0,
   assigned_to             uuid references public.users(id) on delete set null,
   status                  order_status not null default 'pending',
+  tracking_number         text,
   notes                   text,
   created_at              timestamptz not null default now(),
   updated_at              timestamptz not null default now(),

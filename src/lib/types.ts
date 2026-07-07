@@ -155,6 +155,7 @@ export interface Order {
   amount_paid: number;
   assigned_to: string | null;
   status: OrderStatus;
+  tracking_number: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

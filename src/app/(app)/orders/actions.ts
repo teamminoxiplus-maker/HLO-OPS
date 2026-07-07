@@ -33,6 +33,7 @@ export interface QuickAddInput {
   amount_total: number;
   amount_paid: number;
   assigned_to: string | null;
+  tracking_number: string | null;
   notes: string | null;
   lines: QuickAddLine[];
 }
@@ -53,6 +54,7 @@ export async function createOrder(input: QuickAddInput) {
       amount_total: input.amount_total,
       amount_paid: input.amount_paid,
       assigned_to: input.assigned_to,
+      tracking_number: input.tracking_number,
       notes: input.notes,
       updated_by: uid,
     })
@@ -89,6 +91,7 @@ export async function updateOrderField(
     payment_status: PaymentStatus;
     assigned_to: string | null;
     amount_paid: number;
+    tracking_number: string | null;
     notes: string;
     target_completion_date: string | null;
   }>,

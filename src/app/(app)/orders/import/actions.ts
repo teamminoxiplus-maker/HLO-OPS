@@ -14,6 +14,7 @@ export const IMPORT_FIELDS = [
   { key: "amount_paid", label: "Amount Paid", required: false },
   { key: "payment_status", label: "Payment Status", required: false },
   { key: "status", label: "Order Status", required: false },
+  { key: "tracking_number", label: "Tracking #", required: false },
   { key: "notes", label: "Notes", required: false },
 ] as const;
 
@@ -118,6 +119,7 @@ export async function importOrders(
         ? normalizePayment(r.payment_status)
         : "unpaid",
       status: r.status ? normalizeStatus(r.status) : "pending",
+      tracking_number: r.tracking_number ? String(r.tracking_number).trim() : null,
       notes: r.notes ? String(r.notes).trim() : null,
       updated_by: uid,
     });
