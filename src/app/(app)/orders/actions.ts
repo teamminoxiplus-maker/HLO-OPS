@@ -127,6 +127,17 @@ export async function bulkUpdateOrders(
   return { ok: true };
 }
 
+// Permanently delete the selected orders (order_lines cascade).
+export async function bulkDeleteOrders(ids: string[]) {
+  if (!ids.length) return { ok: true };
+  const supabase = createClient();
+  const { error } = await supabase.from("orders").delete().in("id", ids);
+  if (error) return { error: error.message };
+  revalidatePath("/orders");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
 // Mark selected orders fully paid (amount_paid := amount_total, status paid).
 export async function bulkMarkPaid(ids: string[]) {
   if (!ids.length) return { ok: true };

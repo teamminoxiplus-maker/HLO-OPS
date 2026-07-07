@@ -24,6 +24,7 @@ import { formatPHP, formatDate, cn } from "@/lib/utils";
 import {
   bulkMarkPaid,
   bulkUpdateOrders,
+  bulkDeleteOrders,
   updateOrderField,
 } from "./actions";
 import { QuickAddOrder } from "./quick-add";
@@ -166,6 +167,22 @@ export function OrdersTable({
               onClick={() => runBulk(() => bulkMarkPaid(ids))}
             >
               Mark paid
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive hover:text-destructive"
+              disabled={pending}
+              onClick={() => {
+                if (
+                  confirm(
+                    `Delete ${ids.length} order${ids.length === 1 ? "" : "s"}? This can't be undone.`,
+                  )
+                )
+                  runBulk(() => bulkDeleteOrders(ids));
+              }}
+            >
+              Delete
             </Button>
           </div>
         )}
