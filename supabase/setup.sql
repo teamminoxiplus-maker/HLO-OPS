@@ -460,6 +460,7 @@ create table if not exists public.email_subscribers (
   name               text,
   status             subscriber_status not null default 'subscribed',
   source             text,                       -- e.g. 'viber', 'signup_form', 'manual', 'import'
+  groups             text[] not null default '{}', -- batches/segments, e.g. {new,reorder}
   unsubscribe_token  uuid not null default gen_random_uuid(),
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now()

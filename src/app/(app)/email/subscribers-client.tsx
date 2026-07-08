@@ -10,6 +10,8 @@ import {
   UserCheck,
   ClipboardCopy,
   Check,
+  Tag,
+  Pencil,
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,8 @@ import {
   addSubscriber,
   importSubscribers,
   setSubscriberStatus,
+  setSubscriberGroups,
+  bulkAddGroup,
   deleteSubscriber,
 } from "./actions";
 import type { EmailSubscriber, SubscriberStatus } from "@/lib/types";
@@ -40,20 +44,48 @@ export function SubscribersClient({
   pageCount,
   total,
   statusFilter,
+  groupFilter,
   subscribedEmails,
+  knownGroups,
 }: {
   subscribers: EmailSubscriber[];
   page: number;
   pageCount: number;
   total: number;
   statusFilter: SubscriberStatus | null;
+  groupFilter: string | null;
   subscribedEmails: string[];
+  knownGroups: string[];
 }) {
   const router = useRouter();
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pending, start] = useTransition();
+
+  useEffect(() => {
+    const onFocus = () => router.refresh();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [router]);
+
+  const ids = Array.from(selected);
+  const allChecked =
+    subscribers.length > 0 && selected.size === subscribers.length;
+
+  function toggleAll() {
+    setSelected(
+      allChecked ? new Set() : new Set(subscribers.map((s) => s.id)),
+    );
+  }
+  function toggleOne(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
 
   async function copyForBcc() {
     if (subscribedEmails.length === 0) return;
@@ -61,7 +93,6 @@ export function SubscribersClient({
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      // Fallback for browsers that block the async clipboard API.
       const ta = document.createElement("textarea");
       ta.value = text;
       ta.style.position = "fixed";
@@ -74,13 +105,6 @@ export function SubscribersClient({
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   }
-
-  // Refresh data when the tab regains focus (spec §7 concurrent edits).
-  useEffect(() => {
-    const onFocus = () => router.refresh();
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [router]);
 
   function toggleStatus(s: EmailSubscriber) {
     start(async () => {
@@ -100,15 +124,43 @@ export function SubscribersClient({
     });
   }
 
+  function editGroups(s: EmailSubscriber) {
+    const next = window.prompt(
+      `Groups for ${s.email} (comma-separated, e.g. "new, reorder"):`,
+      (s.groups ?? []).join(", "),
+    );
+    if (next === null) return;
+    start(async () => {
+      await setSubscriberGroups(
+        s.id,
+        next.split(",").map((g) => g.trim()).filter(Boolean),
+      );
+      router.refresh();
+    });
+  }
+
+  function bulkGroup() {
+    const g = window.prompt(
+      `Add ${ids.length} contact${ids.length === 1 ? "" : "s"} to which group? (e.g. "reorder")`,
+    );
+    if (!g || !g.trim()) return;
+    start(async () => {
+      await bulkAddGroup(ids, g);
+      setSelected(new Set());
+      router.refresh();
+    });
+  }
+
   const pageHref = (p: number) =>
     `/email?${new URLSearchParams({
       ...(statusFilter ? { status: statusFilter } : {}),
+      ...(groupFilter ? { group: groupFilter } : {}),
       page: String(p),
     }).toString()}`;
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={() => setAddOpen(true)}>
           <Plus className="h-4 w-4" /> Add contact
         </Button>
@@ -120,7 +172,7 @@ export function SubscribersClient({
           variant="outline"
           onClick={copyForBcc}
           disabled={subscribedEmails.length === 0}
-          title="Copy all subscribed emails, comma-separated, to paste into Gmail Bcc"
+          title="Copy the shown subscribed emails, comma-separated, for Gmail Bcc"
         >
           {copied ? (
             <Check className="h-4 w-4 text-emerald-600" />
@@ -129,18 +181,38 @@ export function SubscribersClient({
           )}
           {copied
             ? `Copied ${subscribedEmails.length}`
-            : "Copy emails for BCC"}
+            : groupFilter
+              ? `Copy BCC (${groupFilter})`
+              : "Copy emails for BCC"}
         </Button>
+
+        {selected.size > 0 && (
+          <div className="ml-auto flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 text-sm">
+            <span className="font-medium">{selected.size} selected</span>
+            <Button size="sm" variant="outline" disabled={pending} onClick={bulkGroup}>
+              <Tag className="h-4 w-4" /> Add to group
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <input
+                  type="checkbox"
+                  checked={allChecked}
+                  onChange={toggleAll}
+                  aria-label="Select all"
+                  className="h-4 w-4 rounded border-input"
+                />
+              </TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Name</TableHead>
+              <TableHead className="hidden sm:table-cell">Name</TableHead>
+              <TableHead>Groups</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="hidden sm:table-cell">Source</TableHead>
               <TableHead className="hidden sm:table-cell">Added</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -148,15 +220,48 @@ export function SubscribersClient({
           <TableBody>
             {subscribers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  No contacts yet. Add one, or import a list.
+                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                  No contacts here yet. Add one, or import a list.
                 </TableCell>
               </TableRow>
             )}
             {subscribers.map((s) => (
-              <TableRow key={s.id}>
+              <TableRow key={s.id} data-state={selected.has(s.id) ? "selected" : undefined}>
+                <TableCell>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(s.id)}
+                    onChange={() => toggleOne(s.id)}
+                    aria-label={`Select ${s.email}`}
+                    className="h-4 w-4 rounded border-input"
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{s.email}</TableCell>
-                <TableCell>{s.name ?? "—"}</TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {s.name ?? "—"}
+                </TableCell>
+                <TableCell>
+                  <button
+                    onClick={() => editGroups(s)}
+                    className="flex flex-wrap items-center gap-1 text-left"
+                    title="Edit groups"
+                  >
+                    {(s.groups ?? []).length === 0 ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                        <Pencil className="h-3 w-3" /> add
+                      </span>
+                    ) : (
+                      s.groups.map((g) => (
+                        <Badge
+                          key={g}
+                          className="bg-teal-100 capitalize text-teal-700 dark:bg-teal-950 dark:text-teal-300"
+                        >
+                          {g}
+                        </Badge>
+                      ))
+                    )}
+                  </button>
+                </TableCell>
                 <TableCell>
                   <Badge
                     className={
@@ -167,9 +272,6 @@ export function SubscribersClient({
                   >
                     {s.status}
                   </Badge>
-                </TableCell>
-                <TableCell className="hidden capitalize sm:table-cell">
-                  {s.source ?? "—"}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">
                   {formatDate(s.created_at)}
@@ -212,10 +314,10 @@ export function SubscribersClient({
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
           {total} contact{total === 1 ? "" : "s"}
+          {groupFilter ? ` in "${groupFilter}"` : ""}
         </span>
         {pageCount > 1 && (
           <div className="flex items-center gap-2">
@@ -244,6 +346,7 @@ export function SubscribersClient({
 
       <AddModal
         open={addOpen}
+        knownGroups={knownGroups}
         onClose={() => setAddOpen(false)}
         onDone={() => {
           setAddOpen(false);
@@ -252,6 +355,7 @@ export function SubscribersClient({
       />
       <ImportModal
         open={importOpen}
+        knownGroups={knownGroups}
         onClose={() => setImportOpen(false)}
         onDone={() => {
           setImportOpen(false);
@@ -262,18 +366,30 @@ export function SubscribersClient({
   );
 }
 
+function GroupHint({ knownGroups }: { knownGroups: string[] }) {
+  if (knownGroups.length === 0) return null;
+  return (
+    <p className="text-xs text-muted-foreground">
+      Existing groups: {knownGroups.join(", ")}
+    </p>
+  );
+}
+
 function AddModal({
   open,
+  knownGroups,
   onClose,
   onDone,
 }: {
   open: boolean;
+  knownGroups: string[];
   onClose: () => void;
   onDone: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [source, setSource] = useState("");
+  const [groups, setGroups] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
@@ -284,6 +400,7 @@ function AddModal({
         email,
         name: name || null,
         source: source || null,
+        groups: groups.split(",").map((g) => g.trim()).filter(Boolean),
       });
       if (res?.error) {
         setError(res.error);
@@ -292,6 +409,7 @@ function AddModal({
       setEmail("");
       setName("");
       setSource("");
+      setGroups("");
       onDone();
     });
   }
@@ -319,6 +437,16 @@ function AddModal({
           />
         </div>
         <div className="space-y-1">
+          <Label htmlFor="sub-groups">Groups</Label>
+          <Input
+            id="sub-groups"
+            value={groups}
+            onChange={(e) => setGroups(e.target.value)}
+            placeholder="new, reorder, vip"
+          />
+          <GroupHint knownGroups={knownGroups} />
+        </div>
+        <div className="space-y-1">
           <Label htmlFor="sub-source">Source</Label>
           <Input
             id="sub-source"
@@ -343,19 +471,21 @@ function AddModal({
 
 function ImportModal({
   open,
+  knownGroups,
   onClose,
   onDone,
 }: {
   open: boolean;
+  knownGroups: string[];
   onClose: () => void;
   onDone: () => void;
 }) {
   const [text, setText] = useState("");
+  const [group, setGroup] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  // Accept "email" or "email, name" per line (also comma/semicolon/tab separated).
   function parse(): { email: string; name?: string | null }[] {
     return text
       .split(/[\n]+/)
@@ -376,13 +506,13 @@ function ImportModal({
       return;
     }
     start(async () => {
-      const res = await importSubscribers(rows);
+      const res = await importSubscribers(rows, group || null);
       if (res?.error) {
         setError(res.error);
         return;
       }
       setResult(
-        `Added ${res.added ?? 0}, skipped ${res.skipped ?? 0} existing${
+        `Added ${res.added ?? 0}${group ? ` to "${group.trim().toLowerCase()}"` : ""}, skipped ${res.skipped ?? 0} existing${
           res.invalid ? `, ${res.invalid} invalid` : ""
         }.`,
       );
@@ -399,11 +529,21 @@ function ImportModal({
     >
       <div className="space-y-3">
         <Textarea
-          rows={8}
+          rows={7}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={"maria@email.com, Maria Santos\njuan@email.com\n…"}
         />
+        <div className="space-y-1">
+          <Label htmlFor="imp-group">Add all to group (optional)</Label>
+          <Input
+            id="imp-group"
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            placeholder="e.g. reorder"
+          />
+          <GroupHint knownGroups={knownGroups} />
+        </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         {result && (
           <p className="text-sm text-emerald-600 dark:text-emerald-400">

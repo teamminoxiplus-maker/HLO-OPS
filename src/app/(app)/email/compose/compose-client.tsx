@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { sendTest, sendCampaign } from "../actions";
 
@@ -38,10 +39,12 @@ function prettySize(bytes: number): string {
 
 export function ComposeClient({
   subscribedCount,
+  groups,
   configured,
   testMode,
 }: {
   subscribedCount: number;
+  groups: { name: string; count: number }[];
   configured: boolean;
   testMode: boolean;
 }) {
@@ -49,6 +52,7 @@ export function ComposeClient({
   const fileInput = useRef<HTMLInputElement>(null);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [group, setGroup] = useState(""); // "" = all subscribed
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [testing, startTest] = useTransition();
@@ -57,6 +61,11 @@ export function ComposeClient({
   const totalBytes = attachments.reduce((s, a) => s + a.size, 0);
   const overCap = totalBytes > MAX_ATTACHMENT_BYTES;
   const disabled = !configured || testing || sending;
+
+  const recipientCount = group
+    ? (groups.find((g) => g.name === group)?.count ?? 0)
+    : subscribedCount;
+  const audienceLabel = group ? `group "${group}"` : "all subscribed contacts";
 
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -97,12 +106,17 @@ export function ComposeClient({
       return setMsg({ ok: false, text: "Attachments exceed the 10 MB limit." });
     if (
       !confirm(
-        `Send this to ${subscribedCount} subscribed contact${subscribedCount === 1 ? "" : "s"}? This can't be undone.`,
+        `Send this to ${recipientCount} contact${recipientCount === 1 ? "" : "s"} in ${audienceLabel}? This can't be undone.`,
       )
     )
       return;
     startSend(async () => {
-      const res = await sendCampaign(subject, body, payloadAttachments());
+      const res = await sendCampaign(
+        subject,
+        body,
+        payloadAttachments(),
+        group || null,
+      );
       if (res?.error) return setMsg({ ok: false, text: res.error });
       const failNote = res.failed ? ` (${res.failed} failed)` : "";
       setMsg({
@@ -212,6 +226,30 @@ export function ComposeClient({
           </p>
         </div>
 
+        {/* Audience / batch selector */}
+        {groups.length > 0 && (
+          <div className="space-y-1">
+            <Label htmlFor="cmp-group">Send to</Label>
+            <Select
+              id="cmp-group"
+              value={group}
+              onChange={(e) => setGroup(e.target.value)}
+              disabled={disabled}
+              className="sm:max-w-xs"
+            >
+              <option value="">All subscribed contacts ({subscribedCount})</option>
+              {groups.map((g) => (
+                <option key={g.name} value={g.name}>
+                  {g.name} ({g.count})
+                </option>
+              ))}
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Pick a batch to send this email only to that group.
+            </p>
+          </div>
+        )}
+
         {msg && (
           <p
             className={
@@ -232,9 +270,9 @@ export function ComposeClient({
               <>
                 Will send to{" "}
                 <span className="font-semibold text-foreground">
-                  {subscribedCount}
+                  {recipientCount}
                 </span>{" "}
-                subscribed contact{subscribedCount === 1 ? "" : "s"}.
+                contact{recipientCount === 1 ? "" : "s"} in {audienceLabel}.
               </>
             )}
           </span>
@@ -250,10 +288,10 @@ export function ComposeClient({
             </Button>
             <Button
               onClick={doSend}
-              disabled={disabled || overCap || testMode || subscribedCount === 0}
+              disabled={disabled || overCap || testMode || recipientCount === 0}
             >
               <Send className="h-4 w-4" />
-              {sending ? "Sending…" : "Send to all"}
+              {sending ? "Sending…" : group ? "Send to group" : "Send to all"}
             </Button>
           </div>
         </div>

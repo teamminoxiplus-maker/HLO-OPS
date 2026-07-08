@@ -198,6 +198,7 @@ export interface EmailSubscriber {
   name: string | null;
   status: SubscriberStatus;
   source: string | null;
+  groups: string[];
   unsubscribe_token: string;
   created_at: string;
   updated_at: string;

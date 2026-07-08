@@ -30,11 +30,12 @@ const STATUS_COLORS: Record<string, string> = {
 export default async function ComposePage() {
   const supabase = createClient();
 
-  const [subRes, campaignsRes] = await Promise.all([
+  const [subsRes, campaignsRes] = await Promise.all([
     supabase
       .from("email_subscribers")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "subscribed"),
+      .select("groups")
+      .eq("status", "subscribed")
+      .limit(10000),
     supabase
       .from("email_campaigns")
       .select("*")
@@ -42,7 +43,15 @@ export default async function ComposePage() {
       .limit(10),
   ]);
 
-  const subscribedCount = subRes.count ?? 0;
+  const subRows = (subsRes.data as { groups: string[] }[]) ?? [];
+  const subscribedCount = subRows.length;
+  const counts = new Map<string, number>();
+  for (const r of subRows)
+    for (const g of r.groups ?? []) counts.set(g, (counts.get(g) ?? 0) + 1);
+  const groups = Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   const campaigns = (campaignsRes.data as EmailCampaign[]) ?? [];
 
   return (
@@ -58,6 +67,7 @@ export default async function ComposePage() {
 
       <ComposeClient
         subscribedCount={subscribedCount}
+        groups={groups}
         configured={emailConfigured()}
         testMode={usingTestSender()}
       />

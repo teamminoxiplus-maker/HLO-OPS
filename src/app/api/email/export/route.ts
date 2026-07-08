@@ -20,6 +20,8 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: false })
     .limit(50000);
   if (sp.get("status")) query = query.eq("status", sp.get("status")!);
+  if (sp.get("group"))
+    query = query.contains("groups", [sp.get("group")!.toLowerCase()]);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -28,6 +30,7 @@ export async function GET(req: NextRequest) {
     email: s.email,
     name: s.name ?? "",
     status: s.status,
+    groups: (s.groups ?? []).join(" | "),
     source: s.source ?? "",
     added: s.created_at,
   }));

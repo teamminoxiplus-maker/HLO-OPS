@@ -48,11 +48,25 @@ function baseUrl(): string {
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Normalize a group list: accept an array or comma-separated string; trim,
+// lowercase, drop blanks, dedupe. Group names are case-insensitive.
+function normalizeGroups(input: string | string[] | null | undefined): string[] {
+  if (!input) return [];
+  const arr = Array.isArray(input) ? input : input.split(",");
+  const out: string[] = [];
+  for (const g of arr) {
+    const v = g.trim().toLowerCase();
+    if (v && !out.includes(v)) out.push(v);
+  }
+  return out;
+}
+
 // ---------------- Subscribers ----------------
 export async function addSubscriber(input: {
   email: string;
   name: string | null;
   source: string | null;
+  groups?: string[] | null;
 }) {
   const email = input.email.trim().toLowerCase();
   if (!emailRe.test(email)) return { error: "Please enter a valid email." };
@@ -62,6 +76,7 @@ export async function addSubscriber(input: {
     email,
     name: input.name?.trim() || null,
     source: input.source || "manual",
+    groups: normalizeGroups(input.groups),
   });
   if (error) {
     if (error.code === "23505") return { error: "That email is already on the list." };
@@ -72,10 +87,13 @@ export async function addSubscriber(input: {
 }
 
 // Bulk add from pasted/CSV emails. Dedupes against existing + within the batch.
+// `group` (optional) tags every imported contact into that batch.
 export async function importSubscribers(
   rows: { email: string; name?: string | null }[],
+  group?: string | null,
 ) {
   const supabase = createClient();
+  const importGroups = normalizeGroups(group);
 
   // Normalize + dedupe within the incoming set.
   const seen = new Set<string>();
@@ -106,7 +124,7 @@ export async function importSubscribers(
 
   if (toInsert.length > 0) {
     const { error } = await supabase.from("email_subscribers").insert(
-      toInsert.map((c) => ({ ...c, source: "import" })),
+      toInsert.map((c) => ({ ...c, source: "import", groups: importGroups })),
     );
     if (error) return { error: error.message };
   }
@@ -130,6 +148,42 @@ export async function deleteSubscriber(id: string) {
   const supabase = createClient();
   const { error } = await supabase.from("email_subscribers").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidatePath("/email");
+  return { ok: true };
+}
+
+// Replace one subscriber's groups entirely.
+export async function setSubscriberGroups(id: string, groups: string[]) {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("email_subscribers")
+    .update({ groups: normalizeGroups(groups) })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/email");
+  return { ok: true };
+}
+
+// Add a group to many subscribers at once (union — keeps existing groups).
+export async function bulkAddGroup(ids: string[], group: string) {
+  const g = normalizeGroups(group);
+  if (!ids.length || g.length === 0) return { ok: true };
+  const supabase = createClient();
+
+  const { data, error: readErr } = await supabase
+    .from("email_subscribers")
+    .select("id, groups")
+    .in("id", ids);
+  if (readErr) return { error: readErr.message };
+
+  for (const row of (data as { id: string; groups: string[] }[]) ?? []) {
+    const merged = normalizeGroups([...(row.groups ?? []), ...g]);
+    const { error } = await supabase
+      .from("email_subscribers")
+      .update({ groups: merged })
+      .eq("id", row.id);
+    if (error) return { error: error.message };
+  }
   revalidatePath("/email");
   return { ok: true };
 }
@@ -168,6 +222,7 @@ export async function sendCampaign(
   subject: string,
   body: string,
   attachments?: EmailAttachment[],
+  group?: string | null,
 ) {
   if (!emailConfigured())
     return { error: "Email isn't set up yet. Add RESEND_API_KEY in Vercel first." };
@@ -179,10 +234,13 @@ export async function sendCampaign(
   const supabase = createClient();
   const user = await currentUser();
 
-  const { data: subs, error: subErr } = await supabase
+  let subQuery = supabase
     .from("email_subscribers")
     .select("*")
     .eq("status", "subscribed");
+  const g = normalizeGroups(group);
+  if (g.length > 0) subQuery = subQuery.contains("groups", g);
+  const { data: subs, error: subErr } = await subQuery;
   if (subErr) return { error: subErr.message };
   const subscribers = (subs as EmailSubscriber[]) ?? [];
   if (subscribers.length === 0)
