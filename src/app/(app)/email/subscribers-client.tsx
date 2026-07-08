@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Papa from "papaparse";
 import {
   Plus,
   Upload,
@@ -12,6 +13,8 @@ import {
   Check,
   Tag,
   Pencil,
+  FileDown,
+  FileUp,
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -469,6 +472,12 @@ function AddModal({
   );
 }
 
+interface ImportRow {
+  email: string;
+  name?: string | null;
+  groups?: string[];
+}
+
 function ImportModal({
   open,
   knownGroups,
@@ -480,29 +489,18 @@ function ImportModal({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
   const [group, setGroup] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  function parse(): { email: string; name?: string | null }[] {
-    return text
-      .split(/[\n]+/)
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const parts = line.split(/[,;\t]/).map((p) => p.trim());
-        return { email: parts[0], name: parts[1] || null };
-      });
-  }
-
-  function submit() {
+  function runImport(rows: ImportRow[]) {
     setError(null);
     setResult(null);
-    const rows = parse();
     if (rows.length === 0) {
-      setError("Paste at least one email address.");
+      setError("No email addresses found.");
       return;
     }
     start(async () => {
@@ -512,7 +510,7 @@ function ImportModal({
         return;
       }
       setResult(
-        `Added ${res.added ?? 0}${group ? ` to "${group.trim().toLowerCase()}"` : ""}, skipped ${res.skipped ?? 0} existing${
+        `Added ${res.added ?? 0}, skipped ${res.skipped ?? 0} existing${
           res.invalid ? `, ${res.invalid} invalid` : ""
         }.`,
       );
@@ -520,22 +518,126 @@ function ImportModal({
     });
   }
 
+  // Download a ready-to-fill CSV template.
+  function downloadTemplate() {
+    const csv =
+      "email,name,groups\n" +
+      "maria.santos@email.com,Maria Santos,new\n" +
+      'juan.delacruz@email.com,Juan Dela Cruz,"reorder, vip"\n';
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "hlo-contacts-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Parse an uploaded CSV: needs an email column; name + group(s) optional.
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (fileRef.current) fileRef.current.value = "";
+    if (!file) return;
+    setError(null);
+    setResult(null);
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (res) => {
+        const headers = res.meta.fields ?? [];
+        const find = (kw: string) =>
+          headers.find((h) => h.toLowerCase().includes(kw));
+        const eCol = find("email");
+        const nCol = find("name");
+        const gCol = find("group");
+        if (!eCol) {
+          setError('Your file needs an "email" column.');
+          return;
+        }
+        const rows: ImportRow[] = (res.data as Record<string, string>[]).map(
+          (r) => ({
+            email: r[eCol],
+            name: nCol ? r[nCol] : null,
+            groups:
+              gCol && r[gCol]
+                ? r[gCol].split(/[,;|]/).map((g) => g.trim()).filter(Boolean)
+                : [],
+          }),
+        );
+        runImport(rows);
+      },
+    });
+  }
+
+  // Paste path: "email" or "email, name" per line.
+  function submitPaste() {
+    const rows: ImportRow[] = text
+      .split(/[\n]+/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const parts = line.split(/[,;\t]/).map((p) => p.trim());
+        return { email: parts[0], name: parts[1] || null };
+      });
+    runImport(rows);
+  }
+
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="Import emails"
-      description="One email per line. Optionally add a name after a comma: juan@email.com, Juan"
+      title="Import contacts"
+      description="Upload a filled-in template file, or paste emails."
     >
-      <div className="space-y-3">
-        <Textarea
-          rows={7}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder={"maria@email.com, Maria Santos\njuan@email.com\n…"}
-        />
+      <div className="space-y-4">
+        {/* Option 1 — file */}
+        <div className="space-y-2 rounded-md border p-3">
+          <p className="text-sm font-medium">Option 1 — upload a file</p>
+          <p className="text-xs text-muted-foreground">
+            Columns: <code>email</code>, <code>name</code>, <code>groups</code>{" "}
+            (groups can list several, e.g. <code>reorder, vip</code>). Each row
+            goes to its own batch.
+          </p>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={onFile}
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={downloadTemplate}>
+              <FileDown className="h-4 w-4" /> Download template
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => fileRef.current?.click()}
+              disabled={pending}
+            >
+              <FileUp className="h-4 w-4" />
+              {pending ? "Importing…" : "Upload CSV"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Option 2 — paste */}
+        <div className="space-y-2 rounded-md border p-3">
+          <p className="text-sm font-medium">Option 2 — paste emails</p>
+          <Textarea
+            rows={5}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={"maria@email.com, Maria Santos\njuan@email.com\n…"}
+          />
+          <Button size="sm" onClick={submitPaste} disabled={pending || !text.trim()}>
+            {pending ? "Importing…" : "Import pasted"}
+          </Button>
+        </div>
+
         <div className="space-y-1">
-          <Label htmlFor="imp-group">Add all to group (optional)</Label>
+          <Label htmlFor="imp-group">
+            Also add everyone imported to this group (optional)
+          </Label>
           <Input
             id="imp-group"
             value={group}
@@ -544,18 +646,16 @@ function ImportModal({
           />
           <GroupHint knownGroups={knownGroups} />
         </div>
+
         {error && <p className="text-sm text-destructive">{error}</p>}
         {result && (
           <p className="text-sm text-emerald-600 dark:text-emerald-400">
             {result}
           </p>
         )}
-        <div className="flex justify-end gap-2 border-t pt-3">
+        <div className="flex justify-end border-t pt-3">
           <Button variant="outline" onClick={onDone}>
             Done
-          </Button>
-          <Button onClick={submit} disabled={pending}>
-            {pending ? "Importing…" : "Import"}
           </Button>
         </div>
       </div>

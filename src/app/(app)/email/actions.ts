@@ -89,15 +89,15 @@ export async function addSubscriber(input: {
 // Bulk add from pasted/CSV emails. Dedupes against existing + within the batch.
 // `group` (optional) tags every imported contact into that batch.
 export async function importSubscribers(
-  rows: { email: string; name?: string | null }[],
+  rows: { email: string; name?: string | null; groups?: string[] | null }[],
   group?: string | null,
 ) {
   const supabase = createClient();
-  const importGroups = normalizeGroups(group);
+  const batchGroups = normalizeGroups(group); // applied to every row
 
   // Normalize + dedupe within the incoming set.
   const seen = new Set<string>();
-  const clean: { email: string; name: string | null }[] = [];
+  const clean: { email: string; name: string | null; groups: string[] }[] = [];
   let invalid = 0;
   for (const r of rows) {
     const email = (r.email ?? "").trim().toLowerCase();
@@ -107,7 +107,11 @@ export async function importSubscribers(
     }
     if (seen.has(email)) continue;
     seen.add(email);
-    clean.push({ email, name: r.name?.trim() || null });
+    clean.push({
+      email,
+      name: r.name?.trim() || null,
+      groups: normalizeGroups([...(r.groups ?? []), ...batchGroups]),
+    });
   }
   if (clean.length === 0) return { added: 0, skipped: 0, invalid };
 
@@ -124,7 +128,12 @@ export async function importSubscribers(
 
   if (toInsert.length > 0) {
     const { error } = await supabase.from("email_subscribers").insert(
-      toInsert.map((c) => ({ ...c, source: "import", groups: importGroups })),
+      toInsert.map((c) => ({
+        email: c.email,
+        name: c.name,
+        source: "import",
+        groups: c.groups,
+      })),
     );
     if (error) return { error: error.message };
   }
