@@ -20,11 +20,12 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create type brand_line as enum ('minoxiplus', 'pet_care', 'personal_care', 'home_care');
+  create type brand_line as enum ('minoxiplus', 'pet_care', 'home_care');
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create type content_platform as enum ('shopee', 'lazada', 'tiktok_shop', 'facebook', 'instagram', 'tiktok', 'viber', 'email', 'other');
+  -- Content is focused on Facebook + TikTok.
+  create type content_platform as enum ('facebook', 'tiktok');
 exception when duplicate_object then null; end $$;
 
 do $$ begin

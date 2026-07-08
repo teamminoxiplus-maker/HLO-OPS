@@ -2,13 +2,11 @@
 -- HLO Ops Hub — ONE-SHOT SETUP
 -- ============================================================================
 -- Paste this ENTIRE file into the Supabase SQL editor and hit Run.
--- It creates the schema, security policies, the days_pending view, the email
--- marketing tables, and demo data. Safe to re-run (idempotent). After it
--- succeeds:
+-- Creates schema, security, views, email tables, and demo data. Safe to re-run.
+-- After it succeeds:
 --   1. Create your login: Dashboard > Authentication > Users > Add user
---      (set email + password, tick "Auto Confirm User").
---   2. Promote yourself to admin with the UPDATE at the very bottom of this
---      file (edit the email first).
+--      (email + password, tick "Auto Confirm User").
+--   2. Promote yourself to admin with the UPDATE at the very bottom.
 -- ============================================================================
 
 
@@ -35,11 +33,12 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create type brand_line as enum ('minoxiplus', 'pet_care', 'personal_care', 'home_care');
+  create type brand_line as enum ('minoxiplus', 'pet_care', 'home_care');
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create type content_platform as enum ('shopee', 'lazada', 'tiktok_shop', 'facebook', 'instagram', 'tiktok', 'viber', 'email', 'other');
+  -- Content is focused on Facebook + TikTok.
+  create type content_platform as enum ('facebook', 'tiktok');
 exception when duplicate_object then null; end $$;
 
 do $$ begin
@@ -544,8 +543,6 @@ insert into public.products (name, brand_line, sku, active) values
   ('Minoxiplus Pro Bundle',               'minoxiplus',    'MNX-BND-PR', true),
   ('Pet Care Shampoo (placeholder)',      'pet_care',      'PET-SHMP',   true),
   ('Pet Care Supplement (placeholder)',   'pet_care',      'PET-SUPP',   true),
-  ('Personal Care Soap (placeholder)',    'personal_care', 'PC-SOAP',    true),
-  ('Personal Care Lotion (placeholder)',  'personal_care', 'PC-LOTN',    true),
   ('Home Care Cleaner (placeholder)',     'home_care',     'HC-CLNR',    true),
   ('Home Care Detergent (placeholder)',   'home_care',     'HC-DTRG',    true)
 on conflict do nothing;
@@ -668,9 +665,9 @@ insert into public.content_items (title, platform, content_type, status, publish
 values
   ('7.7 Minoxidil hero reel',       'tiktok',    'reel',            'scheduled', current_date + 1, 'Before/after 3 months. Hook: "Sayang ang buhok mo?"'),
   ('Ketoconazole shampoo carousel', 'facebook',  'carousel',        'for_review',current_date + 2, 'Educational — dandruff + hairfall.'),
-  ('Shopee 7.7 voucher banner',     'shopee',    'voucher_promo',   'published', current_date - 1, 'HLO77 15% off.'),
-  ('Pet shampoo intro post',        'instagram', 'image_post',      'idea',      current_date + 5, 'Non-Minoxiplus coverage — pet care line.'),
-  ('Email blast — 7.7 preview',     'email',     'email_blast',     'drafting',  current_date + 3, 'Subject: Sale starts 7.7!')
+  ('7.7 voucher banner',            'facebook',  'voucher_promo',   'published', current_date - 1, 'HLO77 15% off.'),
+  ('Pet shampoo intro post',        'facebook',  'image_post',      'idea',      current_date + 5, 'Non-Minoxiplus coverage — pet care line.'),
+  ('7.7 preview teaser',            'tiktok',    'reel',            'drafting',  current_date + 3, 'Teaser: Sale starts 7.7!')
 on conflict do nothing;
 
 -- Link content to the 7.7 campaign + set some performance on the published one
@@ -678,19 +675,13 @@ update public.content_items ci
   set campaign_id = c.id
   from public.campaigns c
   where c.name = '7.7 Shopee Mega Sale'
-    and ci.title in ('7.7 Minoxidil hero reel', 'Shopee 7.7 voucher banner', 'Email blast — 7.7 preview');
+    and ci.title in ('7.7 Minoxidil hero reel', '7.7 voucher banner', '7.7 preview teaser');
 
 update public.content_items
   set views = 12400, likes = 890, comments = 74, shares = 210, clicks = 540, sales_attributed = 18500.00
-  where title = 'Shopee 7.7 voucher banner';
+  where title = '7.7 voucher banner';
 
 
 -- ####################  MAKE YOURSELF ADMIN  ####################
--- Run this AFTER you have added your user in Authentication > Users.
--- Change the email to the one you signed up with, then run just this block.
---
---   update public.users
---      set role = 'admin', department = 'management'
+--   update public.users set role='admin', department='management'
 --    where email = 'you@happylifeorganics.ph';
---
--- Verify:  select email, role, department from public.users;

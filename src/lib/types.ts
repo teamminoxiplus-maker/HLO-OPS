@@ -8,18 +8,9 @@ export type Department =
   | "accounting"
   | "management";
 
-export type BrandLine = "minoxiplus" | "pet_care" | "personal_care" | "home_care";
+export type BrandLine = "minoxiplus" | "pet_care" | "home_care";
 
-export type ContentPlatform =
-  | "shopee"
-  | "lazada"
-  | "tiktok_shop"
-  | "facebook"
-  | "instagram"
-  | "tiktok"
-  | "viber"
-  | "email"
-  | "other";
+export type ContentPlatform = "facebook" | "tiktok";
 
 export type ContentType =
   | "reel"

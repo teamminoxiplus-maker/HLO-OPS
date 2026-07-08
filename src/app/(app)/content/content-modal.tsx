@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, Upload, FileCheck2 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/lib/supabase/client";
 import {
   CONTENT_PLATFORMS,
   CONTENT_STATUSES,
@@ -57,6 +58,34 @@ export function ContentModal({
   const [assignedTo, setAssignedTo] = useState("");
   const [notes, setNotes] = useState("");
   const [asset, setAsset] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (fileRef.current) fileRef.current.value = "";
+    if (!file) return;
+    if (file.size > 25 * 1024 * 1024) {
+      setError("File is too large (max 25 MB).");
+      return;
+    }
+    setError(null);
+    setUploading(true);
+    const supabase = createClient();
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${Date.now()}-${safe}`;
+    const { error: upErr } = await supabase.storage
+      .from("content-assets")
+      .upload(path, file, { upsert: false });
+    if (upErr) {
+      setError(`Upload failed: ${upErr.message}`);
+      setUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("content-assets").getPublicUrl(path);
+    setAsset(data.publicUrl);
+    setUploading(false);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -207,12 +236,44 @@ export function ContentModal({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label>Asset link</Label>
-            <Input
-              value={asset}
-              onChange={(e) => setAsset(e.target.value)}
-              placeholder="Drive / Canva URL"
-            />
+            <Label>Asset (upload or link)</Label>
+            <div className="flex gap-2">
+              <Input
+                value={asset}
+                onChange={(e) => setAsset(e.target.value)}
+                placeholder="Upload a file or paste a Drive / Canva URL"
+              />
+              <input
+                ref={fileRef}
+                type="file"
+                className="hidden"
+                onChange={onUpload}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                disabled={uploading}
+                title="Upload a file"
+                onClick={() => fileRef.current?.click()}
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+            </div>
+            {uploading && (
+              <p className="text-xs text-muted-foreground">Uploading…</p>
+            )}
+            {!uploading && asset && (
+              <a
+                href={asset}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <FileCheck2 className="h-3 w-3" /> View attached file
+              </a>
+            )}
           </div>
         </div>
         <div className="space-y-1">

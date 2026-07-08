@@ -18,12 +18,7 @@ export function labelize<T extends string>(v: T): string {
 }
 
 // ---- Option lists (value + label) for selects ----
-export const BRAND_LINES: BrandLine[] = [
-  "minoxiplus",
-  "pet_care",
-  "personal_care",
-  "home_care",
-];
+export const BRAND_LINES: BrandLine[] = ["minoxiplus", "pet_care", "home_care"];
 
 export const DEPARTMENTS: Department[] = [
   "marketing",
@@ -47,17 +42,7 @@ export const ORDER_STATUSES: OrderStatus[] = [
 
 export const PAYMENT_STATUSES: PaymentStatus[] = ["paid", "partial", "unpaid"];
 
-export const CONTENT_PLATFORMS: ContentPlatform[] = [
-  "shopee",
-  "lazada",
-  "tiktok_shop",
-  "facebook",
-  "instagram",
-  "tiktok",
-  "viber",
-  "email",
-  "other",
-];
+export const CONTENT_PLATFORMS: ContentPlatform[] = ["facebook", "tiktok"];
 
 export const CONTENT_TYPES: ContentType[] = [
   "reel",
@@ -128,20 +113,12 @@ export const CONTENT_STATUS_COLORS: Record<ContentStatus, string> = {
 
 // Calendar color-coding by platform (spec §4.1).
 export const PLATFORM_COLORS: Record<ContentPlatform, string> = {
-  shopee: "bg-orange-500",
-  lazada: "bg-indigo-500",
-  tiktok_shop: "bg-rose-500",
   facebook: "bg-blue-600",
-  instagram: "bg-pink-500",
   tiktok: "bg-slate-800",
-  viber: "bg-purple-600",
-  email: "bg-teal-500",
-  other: "bg-slate-400",
 };
 
 export const BRAND_LINE_COLORS: Record<BrandLine, string> = {
   minoxiplus: "bg-emerald-500",
   pet_care: "bg-amber-500",
-  personal_care: "bg-sky-500",
   home_care: "bg-violet-500",
 };
