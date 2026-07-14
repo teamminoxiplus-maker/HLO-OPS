@@ -40,11 +40,13 @@ function prettySize(bytes: number): string {
 export function ComposeClient({
   subscribedCount,
   groups,
+  initialGroup = "",
   configured,
   testMode,
 }: {
   subscribedCount: number;
   groups: { name: string; count: number }[];
+  initialGroup?: string;
   configured: boolean;
   testMode: boolean;
 }) {
@@ -52,7 +54,7 @@ export function ComposeClient({
   const fileInput = useRef<HTMLInputElement>(null);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [group, setGroup] = useState(""); // "" = all subscribed
+  const [group, setGroup] = useState(initialGroup); // "" = all subscribed
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [testing, startTest] = useTransition();

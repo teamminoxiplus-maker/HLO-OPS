@@ -18,6 +18,7 @@ export const maxDuration = 60;
 
 const TABS = [
   { href: "/email", label: "Subscribers" },
+  { href: "/email/batches", label: "Batches" },
   { href: "/email/compose", label: "Compose & Send" },
 ];
 
@@ -27,8 +28,13 @@ const STATUS_COLORS: Record<string, string> = {
   failed: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
 };
 
-export default async function ComposePage() {
+export default async function ComposePage({
+  searchParams,
+}: {
+  searchParams: { group?: string };
+}) {
   const supabase = createClient();
+  const initialGroup = searchParams.group?.trim().toLowerCase() || "";
 
   const [subsRes, campaignsRes] = await Promise.all([
     supabase
@@ -51,6 +57,9 @@ export default async function ComposePage() {
   const groups = Array.from(counts.entries())
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => a.name.localeCompare(b.name));
+  // Ensure a linked-to batch is selectable even if it has 0 contacts.
+  if (initialGroup && !groups.some((g) => g.name === initialGroup))
+    groups.push({ name: initialGroup, count: 0 });
 
   const campaigns = (campaignsRes.data as EmailCampaign[]) ?? [];
 
@@ -68,6 +77,7 @@ export default async function ComposePage() {
       <ComposeClient
         subscribedCount={subscribedCount}
         groups={groups}
+        initialGroup={initialGroup}
         configured={emailConfigured()}
         testMode={usingTestSender()}
       />
