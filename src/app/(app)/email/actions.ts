@@ -187,6 +187,67 @@ export async function setSubscriberGroups(id: string, groups: string[]) {
   return { ok: true };
 }
 
+// Add one email straight into a batch (column). Creates the contact if new,
+// otherwise just adds the batch to their existing groups.
+export async function addEmailToBatch(input: {
+  email: string;
+  name: string | null;
+  group: string;
+}) {
+  const email = input.email.trim().toLowerCase();
+  if (!emailRe.test(email)) return { error: "Please enter a valid email." };
+  const groups = normalizeGroups(input.group);
+  if (groups.length === 0) return { error: "Missing batch." };
+
+  const supabase = createClient();
+  const { data: existing } = await supabase
+    .from("email_subscribers")
+    .select("id, groups")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existing) {
+    const merged = normalizeGroups([...(existing.groups ?? []), ...groups]);
+    const { error } = await supabase
+      .from("email_subscribers")
+      .update({ groups: merged })
+      .eq("id", existing.id);
+    if (error) return { error: error.message };
+  } else {
+    const { error } = await supabase.from("email_subscribers").insert({
+      email,
+      name: input.name?.trim() || null,
+      source: "batch",
+      groups,
+    });
+    if (error) return { error: error.message };
+  }
+  revalidatePath("/email/batches");
+  revalidatePath("/email");
+  return { ok: true };
+}
+
+// Remove a single group/batch from one subscriber (keeps the contact).
+export async function removeFromBatch(id: string, group: string) {
+  const g = normalizeGroups(group);
+  const supabase = createClient();
+  const { data, error: readErr } = await supabase
+    .from("email_subscribers")
+    .select("groups")
+    .eq("id", id)
+    .maybeSingle();
+  if (readErr) return { error: readErr.message };
+  const next = (data?.groups ?? []).filter((x: string) => !g.includes(x));
+  const { error } = await supabase
+    .from("email_subscribers")
+    .update({ groups: next })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/email/batches");
+  revalidatePath("/email");
+  return { ok: true };
+}
+
 // Add a group to many subscribers at once (union — keeps existing groups).
 export async function bulkAddGroup(ids: string[], group: string) {
   const g = normalizeGroups(group);

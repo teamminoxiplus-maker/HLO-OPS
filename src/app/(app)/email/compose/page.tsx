@@ -18,6 +18,7 @@ export const maxDuration = 60;
 
 const TABS = [
   { href: "/email", label: "Subscribers" },
+  { href: "/email/batches", label: "Batches" },
   { href: "/email/compose", label: "Compose & Send" },
 ];
 

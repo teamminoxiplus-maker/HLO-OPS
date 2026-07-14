@@ -16,6 +16,7 @@ const PAGE_SIZE = 50;
 
 const TABS = [
   { href: "/email", label: "Subscribers" },
+  { href: "/email/batches", label: "Batches" },
   { href: "/email/compose", label: "Compose & Send" },
 ];
 
