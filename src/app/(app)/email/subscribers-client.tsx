@@ -38,6 +38,7 @@ import {
   setSubscriberGroups,
   bulkAddGroup,
   deleteSubscriber,
+  deleteAllSubscribers,
 } from "./actions";
 import type { EmailSubscriber, SubscriberStatus } from "@/lib/types";
 
@@ -154,6 +155,23 @@ export function SubscribersClient({
     });
   }
 
+  function clearList() {
+    if (total === 0) return;
+    const typed = window.prompt(
+      `This deletes ALL ${total} contact${total === 1 ? "" : "s"} in every batch. This cannot be undone.\n\nType DELETE to confirm:`,
+    );
+    if (typed?.trim().toUpperCase() !== "DELETE") return;
+    start(async () => {
+      const res = await deleteAllSubscribers();
+      if (res?.error) {
+        alert(res.error);
+        return;
+      }
+      setSelected(new Set());
+      router.refresh();
+    });
+  }
+
   const pageHref = (p: number) =>
     `/email?${new URLSearchParams({
       ...(statusFilter ? { status: statusFilter } : {}),
@@ -190,12 +208,25 @@ export function SubscribersClient({
         </Button>
 
         {selected.size > 0 && (
-          <div className="ml-auto flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 text-sm">
+          <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 text-sm">
             <span className="font-medium">{selected.size} selected</span>
             <Button size="sm" variant="outline" disabled={pending} onClick={bulkGroup}>
               <Tag className="h-4 w-4" /> Add to group
             </Button>
           </div>
+        )}
+
+        {total > 0 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto text-destructive hover:text-destructive"
+            disabled={pending}
+            onClick={clearList}
+            title="Delete all contacts"
+          >
+            <Trash2 className="h-4 w-4" /> Clear list
+          </Button>
         )}
       </div>
 
