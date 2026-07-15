@@ -11,6 +11,8 @@ import { SubscribersClient } from "./subscribers-client";
 import type { EmailSubscriber, SubscriberStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+// Large CSV imports (thousands of contacts) can take a bit.
+export const maxDuration = 60;
 
 const PAGE_SIZE = 50;
 

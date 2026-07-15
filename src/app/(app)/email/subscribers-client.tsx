@@ -541,7 +541,7 @@ function ImportModal({
         return;
       }
       setResult(
-        `Added ${res.added ?? 0}, skipped ${res.skipped ?? 0} existing${
+        `Added ${res.added ?? 0}, updated ${res.updated ?? 0} existing${
           res.invalid ? `, ${res.invalid} invalid` : ""
         }.`,
       );

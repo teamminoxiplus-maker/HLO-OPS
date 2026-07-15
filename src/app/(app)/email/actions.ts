@@ -95,9 +95,9 @@ export async function importSubscribers(
   const supabase = createClient();
   const batchGroups = normalizeGroups(group); // applied to every row
 
-  // Normalize + dedupe within the incoming set.
-  const seen = new Set<string>();
-  const clean: { email: string; name: string | null; groups: string[] }[] = [];
+  // Collapse the file to ONE entry per email, MERGING groups across rows.
+  // (Same email under Buyer A + Buyer B -> one contact in both batches.)
+  const map = new Map<string, { name: string | null; groups: string[] }>();
   let invalid = 0;
   for (const r of rows) {
     const email = (r.email ?? "").trim().toLowerCase();
@@ -105,41 +105,68 @@ export async function importSubscribers(
       invalid++;
       continue;
     }
-    if (seen.has(email)) continue;
-    seen.add(email);
-    clean.push({
-      email,
-      name: r.name?.trim() || null,
-      groups: normalizeGroups([...(r.groups ?? []), ...batchGroups]),
-    });
+    const rowGroups = normalizeGroups([...(r.groups ?? []), ...batchGroups]);
+    const prev = map.get(email);
+    if (prev) {
+      prev.groups = normalizeGroups([...prev.groups, ...rowGroups]);
+      if (!prev.name && r.name?.trim()) prev.name = r.name.trim();
+    } else {
+      map.set(email, { name: r.name?.trim() || null, groups: rowGroups });
+    }
   }
-  if (clean.length === 0) return { added: 0, skipped: 0, invalid };
+  const emails = Array.from(map.keys());
+  if (emails.length === 0) return { added: 0, updated: 0, invalid };
 
-  // Skip ones already stored (emails are always stored lowercased).
-  const { data: existing } = await supabase
-    .from("email_subscribers")
-    .select("email")
-    .in(
-      "email",
-      clean.map((c) => c.email),
-    );
-  const existingSet = new Set((existing ?? []).map((e: { email: string }) => e.email));
-  const toInsert = clean.filter((c) => !existingSet.has(c.email));
+  // Which already exist? Fetch their current groups so we can union, not clobber.
+  const existing = new Map<string, { id: string; groups: string[] }>();
+  for (let i = 0; i < emails.length; i += 500) {
+    const chunk = emails.slice(i, i + 500);
+    const { data } = await supabase
+      .from("email_subscribers")
+      .select("id, email, groups")
+      .in("email", chunk);
+    for (const row of (data as { id: string; email: string; groups: string[] }[]) ?? [])
+      existing.set(row.email, { id: row.id, groups: row.groups ?? [] });
+  }
 
-  if (toInsert.length > 0) {
-    const { error } = await supabase.from("email_subscribers").insert(
-      toInsert.map((c) => ({
-        email: c.email,
-        name: c.name,
-        source: "import",
-        groups: c.groups,
-      })),
-    );
+  // Existing contacts: add any new batches (union). New contacts: insert.
+  let updated = 0;
+  const toInsert: {
+    email: string;
+    name: string | null;
+    source: string;
+    groups: string[];
+  }[] = [];
+  for (const [email, v] of Array.from(map.entries())) {
+    const ex = existing.get(email);
+    if (ex) {
+      const merged = normalizeGroups([...ex.groups, ...v.groups]);
+      const changed =
+        merged.length !== ex.groups.length ||
+        merged.some((g) => !ex.groups.includes(g));
+      if (changed) {
+        const { error } = await supabase
+          .from("email_subscribers")
+          .update({ groups: merged })
+          .eq("id", ex.id);
+        if (error) return { error: error.message };
+        updated++;
+      }
+    } else {
+      toInsert.push({ email, name: v.name, source: "import", groups: v.groups });
+    }
+  }
+
+  for (let i = 0; i < toInsert.length; i += 500) {
+    const { error } = await supabase
+      .from("email_subscribers")
+      .insert(toInsert.slice(i, i + 500));
     if (error) return { error: error.message };
   }
 
   revalidatePath("/email");
-  return { added: toInsert.length, skipped: clean.length - toInsert.length, invalid };
+  revalidatePath("/email/batches");
+  return { added: toInsert.length, updated, invalid };
 }
 
 export async function setSubscriberStatus(id: string, status: SubscriberStatus) {
