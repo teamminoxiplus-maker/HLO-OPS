@@ -15,6 +15,7 @@ Built to the spec in [`Spec.md`](./Spec.md).
 | **Production** | Kanban board (Pending / In Progress / Done) with drag-and-drop, assignee-required rule, blocked indicators, overdue deadlines, My Tasks filter. SOP library (searchable) + editor with live markdown preview and auto-incrementing version. |
 | **Content** | Calendar (month grid, color-coded by platform), list view with inline status editing, performance tab (manual metrics + top-10 chart), campaigns with aggregate metrics, coverage nudge. |
 | **Search** | Global search across orders, tasks, SOPs, and content. |
+| **Assessment** | MINOXIPLUS free hair loss assessment — public mobile-first 12-question flow (Taglish, no login), rules-based classification + safety-gated product recommendations, lead capture, result page + Resend email, kiosk mode, and an allowlisted admin (leads table, detail, funnel dashboard, streamed CSV export). See [`MINOXIPLUS-ASSESSMENT.md`](./MINOXIPLUS-ASSESSMENT.md). |
 
 ## Tech stack
 
@@ -41,6 +42,8 @@ In the Supabase **SQL editor**, run these files in order:
 1. `supabase/migrations/0001_schema.sql` — tables, enums, indexes, triggers
 2. `supabase/migrations/0002_rls.sql` — row-level security
 3. `supabase/migrations/0003_views.sql` — `orders_with_computed` (days_pending)
+4. `supabase/migrations/0004_assessments.sql` — MINOXIPLUS assessment tables
+5. `supabase/migrations/0005_assessments_rls.sql` — assessment RLS (leads locked to service role)
 
 (Or use the Supabase CLI: `supabase db push`.)
 
