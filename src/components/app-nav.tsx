@@ -12,7 +12,6 @@ import {
   X,
   LogOut,
   Search,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,6 @@ const NAV = [
   { href: "/orders", label: "Orders", icon: Package },
   { href: "/production", label: "Production", icon: ClipboardList },
   { href: "/content", label: "Content", icon: Megaphone },
-  { href: "/admin", label: "Assessment", icon: Sparkles },
   { href: "/search", label: "Search", icon: Search },
 ];
 
