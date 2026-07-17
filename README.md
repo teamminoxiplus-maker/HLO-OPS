@@ -37,7 +37,10 @@ and grab the API keys (Project Settings → API).
 
 ### 2. Run the database migrations
 
-In the Supabase **SQL editor**, run these files in order:
+**Fastest:** paste `supabase/setup.sql` into the Supabase **SQL editor** and run
+it once — it's all five migrations concatenated in order.
+
+Or run them individually (same result):
 
 1. `supabase/migrations/0001_schema.sql` — tables, enums, indexes, triggers
 2. `supabase/migrations/0002_rls.sql` — row-level security
@@ -46,6 +49,9 @@ In the Supabase **SQL editor**, run these files in order:
 5. `supabase/migrations/0005_assessments_rls.sql` — assessment RLS (leads locked to service role)
 
 (Or use the Supabase CLI: `supabase db push`.)
+
+> `setup.sql` is generated from the migration files — edit the migrations, then
+> regenerate it. It's safe to re-run.
 
 ### 3. Configure environment variables
 
