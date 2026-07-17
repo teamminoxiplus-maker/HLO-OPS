@@ -34,6 +34,18 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthRoute = path.startsWith("/login");
+  // Public MINOXIPLUS assessment surfaces — no login (spec §6). These are
+  // load-bearing, QR-printed URLs that must work for anonymous visitors.
+  const isPublicRoute =
+    path === "/assessment" ||
+    path.startsWith("/assessment/") ||
+    path === "/kiosk" ||
+    path.startsWith("/kiosk/") ||
+    path.startsWith("/api/assessment/");
+
+  if (isPublicRoute) {
+    return response;
+  }
 
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone();
